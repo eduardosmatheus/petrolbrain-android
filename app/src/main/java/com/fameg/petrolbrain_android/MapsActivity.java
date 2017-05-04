@@ -3,14 +3,17 @@ package com.fameg.petrolbrain_android;
 import android.Manifest;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -26,14 +29,31 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
+
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static com.google.android.gms.common.api.GoogleApiClient.*;
+import static com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import static com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         ConnectionCallbacks, OnConnectionFailedListener, ItemFragment.OnListFragmentInteractionListener {
 
+    private Location loc;
     private GoogleMap meuMapa;
     private GoogleApiClient client;
+    private PetrolBrainFetchPlacesTask petrolBrainFetchPlacesTask;
+
+    private boolean isBound = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,12 +91,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
     public void onMapReady(GoogleMap googleMap) throws SecurityException {
         meuMapa = googleMap;
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         boolean isGpsActive = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean possoVerMeuLocal = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PERMISSION_GRANTED;
         meuMapa.setMyLocationEnabled(possoVerMeuLocal && isGpsActive);
+
     }
 
     @Override
@@ -89,6 +115,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 22);
+
+        loc = LocationServices.FusedLocationApi.getLastLocation(client);
+        if(loc != null) Log.d("MEU LOCAL: ", loc.getLatitude() + " - "+ loc.getLongitude());
     }
 
     @Override
@@ -112,13 +141,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         meuMapa.moveCamera(CameraUpdateFactory.newLatLngZoom(somewhere, 15));
     }
 
-    private BottomNavigationView.OnNavigationItemSelectedListener navigationListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
+    private final BottomNavigationView.OnNavigationItemSelectedListener navigationListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.nearby : {
                     SupportMapFragment mapFragment = SupportMapFragment.newInstance();
                     replaceContent(mapFragment);
+                    PetrolBrainFetchPlacesTask task = new PetrolBrainFetchPlacesTask();
+                    task.execute("-26.4747835","-48.9894727", "5000");
                     mapFragment.getMapAsync(MapsActivity.this);
                     return true;
                 }
@@ -145,5 +176,79 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onListFragmentInteraction(DummyContent.DummyItem item) {
         Toast.makeText(this, item.toString(), Toast.LENGTH_SHORT).show();
+    }
+
+    public class PetrolBrainFetchPlacesTask extends AsyncTask<String, Void, JSONObject> {
+
+        @Override
+        protected JSONObject doInBackground(String... strings) {
+
+            final String latitude = strings[0];
+            final String longitude = strings[1];
+            final String radius = strings[2];
+
+            HttpsURLConnection conn = null;
+            BufferedReader reader = null;
+
+            final String nearbySearch = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
+            Uri uri = Uri.parse(nearbySearch)
+                    .buildUpon()
+                    .appendQueryParameter("key", "AIzaSyD81NQ74zxczdfejdiegET7wtaPQIUmogE")
+                    .appendQueryParameter("location", latitude+","+longitude)
+                    .appendQueryParameter("radius", radius)
+                    .appendQueryParameter("type", "gas_station")
+                    .build();
+
+            try {
+                URL url = new URL(uri.toString());
+                conn = (HttpsURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.connect();
+
+                InputStream in = conn.getInputStream();
+                if(in == null) return null;
+
+                reader = new BufferedReader(new InputStreamReader(in));
+
+                StringBuffer buffer = new StringBuffer();
+
+                String linha;
+                while((linha = reader.readLine()) != null) {
+                    buffer.append(String.format("%s\n", linha));
+                }
+                if(buffer.length() == 0) return null;
+
+                Log.d("Coisa do server:" ,buffer.toString());
+                return new JSONObject(buffer.toString());
+            } catch (IOException | JSONException e) {
+                Log.e("Pau em alguma coisa.", e.toString());
+            } finally {
+                if(conn != null) conn.disconnect();
+                if(reader != null) {
+                    try { reader.close(); } catch (IOException e) {
+                        Log.e("Erro na stream.", "Causa: ", e);
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject result) {
+            super.onPostExecute(result);
+            Log.d("Chegou do places:", result.toString());
+            try {
+                JSONArray arr = result.getJSONArray("results");
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject object = arr.getJSONObject(i);
+                    JSONObject placeLocation = object.getJSONObject("geometry").getJSONObject("location");
+
+                    LatLng latLng = new LatLng(placeLocation.getDouble("lat"), placeLocation.getDouble("lng"));
+                    meuMapa.addMarker(new MarkerOptions().position(latLng).title(object.getString("name")));
+                }
+            } catch (JSONException e) {
+                Log.e("Deu pau nos results.", "Causa: ",e);
+            }
+        }
     }
 }
