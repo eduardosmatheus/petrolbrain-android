@@ -1,6 +1,8 @@
 package com.fameg.petrolbrain_android;
 
 import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -18,7 +20,6 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.fameg.petrolbrain_android.fragments.ItemFragment;
-import com.fameg.petrolbrain_android.fragments.dummy.DummyContent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -27,6 +28,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONArray;
@@ -46,14 +48,13 @@ import static com.google.android.gms.common.api.GoogleApiClient.ConnectionCallba
 import static com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
-        ConnectionCallbacks, OnConnectionFailedListener, ItemFragment.OnListFragmentInteractionListener {
+        ConnectionCallbacks, OnConnectionFailedListener {
 
     private Location loc;
     private GoogleMap meuMapa;
     private GoogleApiClient client;
-    private PetrolBrainFetchPlacesTask petrolBrainFetchPlacesTask;
 
-    private boolean isBound = true;
+    private BottomNavigationView navigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,9 +65,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(savedInstanceState != null) return;
         }
 
-        BottomNavigationView navigationView = (BottomNavigationView) findViewById(R.id.mainNav);
+        navigationView = (BottomNavigationView) findViewById(R.id.mainNav);
         navigationView.setOnNavigationItemSelectedListener(navigationListener);
-        navigationView.setSelectedItemId(R.id.nearby);
 
         client = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -101,8 +101,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         boolean isGpsActive = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean possoVerMeuLocal = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PERMISSION_GRANTED;
-        meuMapa.setMyLocationEnabled(possoVerMeuLocal && isGpsActive);
 
+        meuMapa.setMyLocationEnabled(possoVerMeuLocal && isGpsActive);
     }
 
     @Override
@@ -117,7 +117,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 22);
 
         loc = LocationServices.FusedLocationApi.getLastLocation(client);
-        if(loc != null) Log.d("MEU LOCAL: ", loc.getLatitude() + " - "+ loc.getLongitude());
+        if(loc != null) {
+            navigationView.setSelectedItemId(R.id.nearby);
+        }
     }
 
     @Override
@@ -148,8 +150,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 case R.id.nearby : {
                     SupportMapFragment mapFragment = SupportMapFragment.newInstance();
                     replaceContent(mapFragment);
+
                     PetrolBrainFetchPlacesTask task = new PetrolBrainFetchPlacesTask();
-                    task.execute("-26.4747835","-48.9894727", "5000");
+                    task.execute(String.valueOf(loc.getLatitude()),String.valueOf(loc.getLongitude()), "2000");
+
                     mapFragment.getMapAsync(MapsActivity.this);
                     return true;
                 }
@@ -170,15 +174,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void replaceContent(Fragment mapFragment) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.content, mapFragment).commit();
-
-    }
-
-    @Override
-    public void onListFragmentInteraction(DummyContent.DummyItem item) {
-        Toast.makeText(this, item.toString(), Toast.LENGTH_SHORT).show();
     }
 
     public class PetrolBrainFetchPlacesTask extends AsyncTask<String, Void, JSONObject> {
+
+        private final ProgressDialog dialog = new ProgressDialog(MapsActivity.this);
+
+        @Override
+        protected void onPreExecute() {
+            dialog.setMessage("Carregando locais próximos....");
+            dialog.setCanceledOnTouchOutside(false);
+            dialog.show();
+        }
 
         @Override
         protected JSONObject doInBackground(String... strings) {
@@ -218,14 +225,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 if(buffer.length() == 0) return null;
 
-                Log.d("Coisa do server:" ,buffer.toString());
                 return new JSONObject(buffer.toString());
             } catch (IOException | JSONException e) {
                 Log.e("Pau em alguma coisa.", e.toString());
             } finally {
                 if(conn != null) conn.disconnect();
                 if(reader != null) {
-                    try { reader.close(); } catch (IOException e) {
+                    try { reader.close(); }
+                    catch (IOException e) {
                         Log.e("Erro na stream.", "Causa: ", e);
                     }
                 }
@@ -236,19 +243,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected void onPostExecute(JSONObject result) {
             super.onPostExecute(result);
-            Log.d("Chegou do places:", result.toString());
             try {
                 JSONArray arr = result.getJSONArray("results");
                 for (int i = 0; i < arr.length(); i++) {
                     JSONObject object = arr.getJSONObject(i);
                     JSONObject placeLocation = object.getJSONObject("geometry").getJSONObject("location");
-
                     LatLng latLng = new LatLng(placeLocation.getDouble("lat"), placeLocation.getDouble("lng"));
+
                     meuMapa.addMarker(new MarkerOptions().position(latLng).title(object.getString("name")));
+                    meuMapa.setOnMarkerClickListener(new PlaceDetailListener(object.getString("id")));
                 }
             } catch (JSONException e) {
                 Log.e("Deu pau nos results.", "Causa: ",e);
             }
+            dialog.dismiss();
         }
     }
+
+    private class PlaceDetailListener implements GoogleMap.OnMarkerClickListener {
+
+        private final String placeId;
+
+        public PlaceDetailListener(String placeId) {
+            this.placeId = placeId;
+        }
+
+        @Override
+        public boolean onMarkerClick(Marker marker) {
+            Intent intent = new Intent(getApplicationContext(), PlaceDetailActivity.class);
+            intent.putExtra("PLACE_ID", placeId);
+            startActivity(intent);
+            return false;
+        }
+
+    };
 }
