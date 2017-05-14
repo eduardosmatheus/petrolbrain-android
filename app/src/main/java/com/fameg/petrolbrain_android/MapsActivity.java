@@ -250,7 +250,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     JSONObject placeLocation = object.getJSONObject("geometry").getJSONObject("location");
                     LatLng latLng = new LatLng(placeLocation.getDouble("lat"), placeLocation.getDouble("lng"));
 
-                    meuMapa.addMarker(new MarkerOptions().position(latLng).title(object.getString("name")));
+                    MarkerOptions options = new MarkerOptions()
+                            .position(latLng)
+                            .title(object.getString("name"));
+                    meuMapa.addMarker(options);
+                    //TODO Encontrar forma de cada marker receber seu ID.
                     meuMapa.setOnMarkerClickListener(new PlaceDetailListener(object.getString("place_id")));
                 }
             } catch (JSONException e) {
