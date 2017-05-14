@@ -10,6 +10,7 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,8 +47,8 @@ public class PlaceDetailActivity extends AppCompatActivity {
 
             Uri uri = Uri.parse(baseUrl)
                     .buildUpon()
-                    .appendQueryParameter("key", "AIzaSyD81NQ74zxczdfejdiegET7wtaPQIUmogE")
                     .appendQueryParameter("placeid", strings[0])
+                    .appendQueryParameter("key", "AIzaSyB-Shj41rhxDcTs5GLOqoyJf79CY60MQug")
                     .build();
 
             HttpsURLConnection conn = null;

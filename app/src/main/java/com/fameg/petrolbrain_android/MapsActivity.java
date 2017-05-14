@@ -103,6 +103,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         boolean possoVerMeuLocal = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PERMISSION_GRANTED;
 
         meuMapa.setMyLocationEnabled(possoVerMeuLocal && isGpsActive);
+
+        PetrolBrainFetchPlacesTask task = new PetrolBrainFetchPlacesTask();
+        task.execute(String.valueOf(loc.getLatitude()),String.valueOf(loc.getLongitude()), "2000");
+
     }
 
     @Override
@@ -150,10 +154,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 case R.id.nearby : {
                     SupportMapFragment mapFragment = SupportMapFragment.newInstance();
                     replaceContent(mapFragment);
-
-                    PetrolBrainFetchPlacesTask task = new PetrolBrainFetchPlacesTask();
-                    task.execute(String.valueOf(loc.getLatitude()),String.valueOf(loc.getLongitude()), "2000");
-
                     mapFragment.getMapAsync(MapsActivity.this);
                     return true;
                 }
@@ -251,12 +251,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     LatLng latLng = new LatLng(placeLocation.getDouble("lat"), placeLocation.getDouble("lng"));
 
                     meuMapa.addMarker(new MarkerOptions().position(latLng).title(object.getString("name")));
-                    meuMapa.setOnMarkerClickListener(new PlaceDetailListener(object.getString("id")));
+                    meuMapa.setOnMarkerClickListener(new PlaceDetailListener(object.getString("place_id")));
                 }
             } catch (JSONException e) {
                 Log.e("Deu pau nos results.", "Causa: ",e);
             }
             dialog.dismiss();
+            meuMapa.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(loc.getLatitude(), loc.getLongitude()), 15));
         }
     }
 
