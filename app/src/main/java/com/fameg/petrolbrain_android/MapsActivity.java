@@ -27,6 +27,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -40,6 +41,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -53,8 +56,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Location loc;
     private GoogleMap meuMapa;
     private GoogleApiClient client;
-
     private BottomNavigationView navigationView;
+
+    private Map<String, String> markerIds = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,11 +95,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
     public void onMapReady(GoogleMap googleMap) throws SecurityException {
         meuMapa = googleMap;
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -103,6 +102,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         boolean possoVerMeuLocal = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PERMISSION_GRANTED;
 
         meuMapa.setMyLocationEnabled(possoVerMeuLocal && isGpsActive);
+        meuMapa.setOnMarkerClickListener(new PlaceDetailListener());
 
         PetrolBrainFetchPlacesTask task = new PetrolBrainFetchPlacesTask();
         task.execute(String.valueOf(loc.getLatitude()),String.valueOf(loc.getLongitude()), "2000");
@@ -250,12 +250,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     JSONObject placeLocation = object.getJSONObject("geometry").getJSONObject("location");
                     LatLng latLng = new LatLng(placeLocation.getDouble("lat"), placeLocation.getDouble("lng"));
 
+                    String id = object.getString("place_id");
+                    String placeName = object.getString("name");
+
+                    markerIds.put(placeName, id);
+
                     MarkerOptions options = new MarkerOptions()
                             .position(latLng)
-                            .title(object.getString("name"));
+                            .title(placeName);
                     meuMapa.addMarker(options);
-                    //TODO Encontrar forma de cada marker receber seu ID.
-                    meuMapa.setOnMarkerClickListener(new PlaceDetailListener(object.getString("place_id")));
                 }
             } catch (JSONException e) {
                 Log.e("Deu pau nos results.", "Causa: ",e);
@@ -267,16 +270,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private class PlaceDetailListener implements GoogleMap.OnMarkerClickListener {
 
-        private final String placeId;
-
-        public PlaceDetailListener(String placeId) {
-            this.placeId = placeId;
-        }
-
         @Override
         public boolean onMarkerClick(Marker marker) {
+            String placeId = markerIds.get(marker.getTitle());
+
             Intent intent = new Intent(getApplicationContext(), PlaceDetailActivity.class);
             intent.putExtra("PLACE_ID", placeId);
+
             startActivity(intent);
             return false;
         }

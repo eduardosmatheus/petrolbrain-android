@@ -9,7 +9,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -17,7 +19,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.PlacePhotoMetadata;
 import com.google.android.gms.location.places.PlacePhotoMetadataBuffer;
 import com.google.android.gms.location.places.PlacePhotoMetadataResult;
-import com.google.android.gms.location.places.PlacePhotoResult;
 import com.google.android.gms.location.places.Places;
 
 import org.json.JSONArray;
@@ -29,13 +30,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
 public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
-    private ImageView placeImage;
+    private HorizontalScrollView flipper;
     private TextView placeAddress;
     private TextView placePhone;
     private TextView placeOpeningHours;
@@ -49,10 +53,12 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_place_detail);
 
-        placeImage = (ImageView) findViewById(R.id.placeImage);
         placeAddress = (TextView) findViewById(R.id.placeAddress);
         placePhone = (TextView) findViewById(R.id.placePhone);
         placeOpeningHours = (TextView) findViewById(R.id.placeOpeningHours);
+        flipper = (HorizontalScrollView) findViewById(R.id.placeImagesFlipper);
+//        LayoutTransition transa = new LayoutTransition();
+//        transa.
 
         client = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -85,19 +91,14 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        PlacePhotoTask task = new PlacePhotoTask(placeImage.getWidth(), placeImage.getHeight());
-        task.execute("ChIJrTLr-GyuEmsRBfy61i59si0");
+        doPhotoSearch(flipper.getWidth(), flipper.getHeight()).execute(placeId);
     }
 
     @Override
-    public void onConnectionSuspended(int i) {
-
-    }
+    public void onConnectionSuspended(int i) {}
 
     @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {}
 
 
     private class PlaceDetailFetchTask extends AsyncTask<String, Void, JSONObject> {
@@ -184,62 +185,51 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
         }
     }
 
-    private class PlacePhotoTask extends AsyncTask<String, Void, AttributedPhoto> {
+    private AsyncTask<String, Void, List<Bitmap>> doPhotoSearch(final int width, final int height) {
+        return new AsyncTask<String, Void, List<Bitmap>>() {
 
-        private int mWidth;
-        private int mHeight;
+            @Override
+            protected List<Bitmap> doInBackground(String... strings) {
+                final String placeId = strings[0];
 
-        public PlacePhotoTask(int width, int height) {
-            mHeight = height;
-            mWidth = width;
-        }
+                PlacePhotoMetadataResult result = Places.GeoDataApi.getPlacePhotos(client, placeId).await();
 
-        @Override
-        protected void onPreExecute() {
-            placeImage.setImageResource(R.drawable.ic_broken_image_black_24dp);
-        }
+                List<Bitmap> fotosBonitas = new ArrayList<>();
+                if (result.getStatus().isSuccess()) {
+                    PlacePhotoMetadataBuffer photoMetaData = result.getPhotoMetadata();
 
-        @Override
-        protected AttributedPhoto doInBackground(String... strings) {
-            final String placeId = strings[0];
 
-            PlacePhotoMetadataResult result = Places.GeoDataApi
-                    .getPlacePhotos(client, placeId).await();
+                    if (photoMetaData.getCount() > 0 && !isCancelled()) {
+                        PlacePhotoMetadata photo = photoMetaData.get(0);
 
-            AttributedPhoto attributedPhoto = null;
-            if (result.getStatus().isSuccess()) {
-                PlacePhotoMetadataBuffer photoMetaData = result.getPhotoMetadata();
-                if (photoMetaData.getCount() > 0 && !isCancelled()) {
-                    PlacePhotoMetadata photo = photoMetaData.get(0);
-                    CharSequence attribution = photo.getAttributions();
-                    Bitmap image = photo.getScaledPhoto(client, mWidth, mHeight).await().getBitmap();
-                    attributedPhoto = new AttributedPhoto(attribution, image);
+                        Iterator<PlacePhotoMetadata> coisas = photoMetaData.iterator();
+                        while (coisas.hasNext()) {
+                            Bitmap image = coisas.next()
+                                    .getScaledPhoto(client, width, height)
+                                    .await()
+                                    .getBitmap();
+                            fotosBonitas.add(image);
+                        }
+                    }
+                    photoMetaData.release();
                 }
-                photoMetaData.release();
+                return fotosBonitas;
             }
-            return attributedPhoto;
-        }
 
-        @Override
-        protected void onPostExecute(AttributedPhoto attributedPhoto) {
-            if(attributedPhoto != null) {
-                placeImage.setImageBitmap(attributedPhoto.bitmap);
+            @Override
+            protected void onPostExecute(List<Bitmap> photos) {
+                if(!photos.isEmpty()) {
+                    LinearLayout layout = (LinearLayout) findViewById(R.id.linearImages);
+                    for (Bitmap bit : photos) {
+                        ImageView imageView = new ImageView(getApplicationContext());
+                        imageView.setId(photos.indexOf(bit));
+                        imageView.setPadding(2, 2, 2, 2);
+                        imageView.setImageBitmap(bit);
+                        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        layout.addView(imageView);
+                    }
+                }
             }
-        }
-    }
-
-    /**
-     * Holder for an image and its attribution.
-     */
-    class AttributedPhoto {
-
-        public final CharSequence attribution;
-
-        public final Bitmap bitmap;
-
-        public AttributedPhoto(CharSequence attribution, Bitmap bitmap) {
-            this.attribution = attribution;
-            this.bitmap = bitmap;
-        }
+        };
     }
 }
