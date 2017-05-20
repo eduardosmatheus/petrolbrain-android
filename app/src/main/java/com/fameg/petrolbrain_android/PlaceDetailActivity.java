@@ -57,8 +57,6 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
         placePhone = (TextView) findViewById(R.id.placePhone);
         placeOpeningHours = (TextView) findViewById(R.id.placeOpeningHours);
         flipper = (HorizontalScrollView) findViewById(R.id.placeImagesFlipper);
-//        LayoutTransition transa = new LayoutTransition();
-//        transa.
 
         client = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -194,7 +192,7 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
 
                 PlacePhotoMetadataResult result = Places.GeoDataApi.getPlacePhotos(client, placeId).await();
 
-                List<Bitmap> fotosBonitas = new ArrayList<>();
+                List<Bitmap> photos = new ArrayList<>();
                 if (result.getStatus().isSuccess()) {
                     PlacePhotoMetadataBuffer photoMetaData = result.getPhotoMetadata();
 
@@ -202,18 +200,18 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
                     if (photoMetaData.getCount() > 0 && !isCancelled()) {
                         PlacePhotoMetadata photo = photoMetaData.get(0);
 
-                        Iterator<PlacePhotoMetadata> coisas = photoMetaData.iterator();
-                        while (coisas.hasNext()) {
-                            Bitmap image = coisas.next()
+                        Iterator<PlacePhotoMetadata> photosResult = photoMetaData.iterator();
+                        while (photosResult.hasNext()) {
+                            Bitmap image = photosResult.next()
                                     .getScaledPhoto(client, width, height)
                                     .await()
                                     .getBitmap();
-                            fotosBonitas.add(image);
+                            photos.add(image);
                         }
                     }
                     photoMetaData.release();
                 }
-                return fotosBonitas;
+                return photos;
             }
 
             @Override
