@@ -1,7 +1,9 @@
 package com.fameg.petrolbrain_android;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
@@ -20,6 +22,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.fameg.petrolbrain_android.fragments.ItemFragment;
+import com.fameg.petrolbrain_android.fragments.SettingsFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -27,7 +30,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -158,12 +160,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     return true;
                 }
 
-                case R.id.availablePlaces: {
-                    //TODO: Listar os postos disponíveis na minha base de dados.
-                    replaceContent(new ItemFragment());
-                    return true;
-                }
-                case R.id.myProfile: {
+                case R.id.mySettings: {
+                    replaceContent(new SettingsFragment());
                     return true;
                 }
             }
@@ -272,12 +270,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         public boolean onMarkerClick(Marker marker) {
-            String placeId = markerIds.get(marker.getTitle());
+            final String placeId = markerIds.get(marker.getTitle());
 
-            Intent intent = new Intent(getApplicationContext(), PlaceDetailActivity.class);
-            intent.putExtra("PLACE_ID", placeId);
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MapsActivity.this);
+            dialogBuilder.setTitle("Ver detalhes");
+            dialogBuilder.setMessage("Deseja ver os detalhes do local?");
+            dialogBuilder.setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    Intent intent = new Intent(getApplicationContext(), PlaceDetailActivity.class);
+                    intent.putExtra("PLACE_ID", placeId);
+                    startActivity(intent);
+                }
+            });
 
-            startActivity(intent);
+            dialogBuilder.setNegativeButton("Não", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+                }
+            });
+            dialogBuilder.create().show();
             return false;
         }
 

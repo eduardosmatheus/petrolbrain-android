@@ -2,4 +2,7 @@
     <string name="app_name">Petrolbrain-android</string>
     <string name="service_started">Serviço iniciado</string>
     <string name="title_activity_maps">Map</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

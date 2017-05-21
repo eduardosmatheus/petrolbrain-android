@@ -39,7 +39,7 @@ import javax.net.ssl.HttpsURLConnection;
 public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
-    private HorizontalScrollView flipper;
+    private HorizontalScrollView flipper; //TODO Deverá ser mudado.
     private TextView placeAddress;
     private TextView placePhone;
     private TextView placeOpeningHours;
