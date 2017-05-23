@@ -3,6 +3,7 @@ package com.fameg.petrolbrain_android;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
@@ -21,7 +22,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.fameg.petrolbrain_android.fragments.ItemFragment;
 import com.fameg.petrolbrain_android.fragments.SettingsFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -30,6 +30,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -65,6 +67,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        boolean isGpsActive = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        if (!isGpsActive) {
+            AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+            dialog.setMessage("Para utilizar este app, é necessário estar com o GPS ativo.");
+            dialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+                    finish();
+                }
+            });
+            dialog.create().show();
+        }
+
         setContentView(R.layout.activity_maps);
 
         if(findViewById(R.id.content) != null) {
@@ -99,11 +117,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) throws SecurityException {
         meuMapa = googleMap;
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        boolean isGpsActive = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean possoVerMeuLocal = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PERMISSION_GRANTED;
 
-        meuMapa.setMyLocationEnabled(possoVerMeuLocal && isGpsActive);
+        meuMapa.setMyLocationEnabled(possoVerMeuLocal);
         meuMapa.setOnMarkerClickListener(new PlaceDetailListener());
 
         PetrolBrainFetchPlacesTask task = new PetrolBrainFetchPlacesTask();
@@ -259,10 +275,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     meuMapa.addMarker(options);
                 }
             } catch (JSONException e) {
-                Log.e("Deu pau nos results.", "Causa: ",e);
+                Log.e("ERRO.", "Causa: ",e);
             }
             dialog.dismiss();
-            meuMapa.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(loc.getLatitude(), loc.getLongitude()), 15));
+
+            LatLng aqui = new LatLng(loc.getLatitude(), loc.getLongitude());
+
+            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher);
+
+            meuMapa.addMarker(new MarkerOptions().position(aqui).icon(icon).title("Você está aqui."));
+
+            meuMapa.moveCamera(CameraUpdateFactory.newLatLngZoom(aqui, 15));
         }
     }
 
@@ -294,5 +317,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return false;
         }
 
-    };
+    }
 }
