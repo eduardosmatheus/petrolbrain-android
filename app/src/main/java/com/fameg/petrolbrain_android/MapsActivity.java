@@ -23,6 +23,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.fameg.petrolbrain_android.fragments.SettingsFragment;
+import com.github.kevinsawicki.http.HttpRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -41,10 +42,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -72,7 +69,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         boolean isGpsActive = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (!isGpsActive) {
             AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-            dialog.setMessage("Para utilizar este app, é necessário estar com o GPS ativo.");
+            dialog.setMessage("Para utilizar este app, é necessário estar com a localização ativa.");
             dialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
@@ -153,8 +150,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         if(requestCode == 22) {// TODO: Assign 22 to a variable.
             if(grantResults[0] == PERMISSION_GRANTED) {
-                Location userLocation = LocationServices.FusedLocationApi.getLastLocation(client);
-                LatLng localAtual = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
+                loc = LocationServices.FusedLocationApi.getLastLocation(client);
+                LatLng localAtual = new LatLng(loc.getLatitude(), loc.getLongitude());
                 moveMapToSomewhere(localAtual, new MarkerOptions().title("Você está aqui."));
             } else finish();
         }
@@ -210,7 +207,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             BufferedReader reader = null;
 
             final String nearbySearch = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
-            Uri uri = Uri.parse(nearbySearch)
+            try {
+                Uri uri = Uri.parse(nearbySearch)
                     .buildUpon()
                     .appendQueryParameter("key", "AIzaSyD81NQ74zxczdfejdiegET7wtaPQIUmogE")
                     .appendQueryParameter("location", latitude+","+longitude)
@@ -218,36 +216,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .appendQueryParameter("type", "gas_station")
                     .build();
 
-            try {
-                URL url = new URL(uri.toString());
-                conn = (HttpsURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.connect();
-
-                InputStream in = conn.getInputStream();
-                if(in == null) return null;
-
-                reader = new BufferedReader(new InputStreamReader(in));
-
-                StringBuffer buffer = new StringBuffer();
-
-                String linha;
-                while((linha = reader.readLine()) != null) {
-                    buffer.append(String.format("%s\n", linha));
-                }
-                if(buffer.length() == 0) return null;
-
-                return new JSONObject(buffer.toString());
-            } catch (IOException | JSONException e) {
+                String response = HttpRequest.get(uri.toString()).body();
+                return new JSONObject(response);
+            } catch (JSONException e) {
                 Log.e("Pau em alguma coisa.", e.toString());
-            } finally {
-                if(conn != null) conn.disconnect();
-                if(reader != null) {
-                    try { reader.close(); }
-                    catch (IOException e) {
-                        Log.e("Erro na stream.", "Causa: ", e);
-                    }
-                }
             }
             return null;
         }

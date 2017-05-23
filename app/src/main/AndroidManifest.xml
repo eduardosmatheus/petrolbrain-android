@@ -18,10 +18,9 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDZ8Z06QkGjMEjZFJKxlbo1irKbNDD9HZE"/>
+            android:value="AIzaSyDZ8Z06QkGjMEjZFJKxlbo1irKbNDD9HZE" />
 
         <activity
             android:name=".MapsActivity"
@@ -35,7 +34,8 @@
         </activity>
         <activity
             android:name=".PlaceDetailActivity"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait" />
+        <activity android:name=".PlaceCommentsActivity"></activity>
     </application>
 
 </manifest>

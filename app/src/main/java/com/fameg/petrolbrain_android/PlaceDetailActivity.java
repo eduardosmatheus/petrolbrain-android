@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.github.kevinsawicki.http.HttpRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.PlacePhotoMetadata;
@@ -121,40 +122,11 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
                     .appendQueryParameter("key", "AIzaSyB-Shj41rhxDcTs5GLOqoyJf79CY60MQug")
                     .build();
 
-            HttpsURLConnection conn = null;
-            BufferedReader reader = null;
-
             try {
-                URL url = new URL(uri.toString());
-                conn = (HttpsURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.connect();
-
-                InputStream in = conn.getInputStream();
-                if(in == null) return null;
-
-                reader = new BufferedReader(new InputStreamReader(in));
-
-                StringBuffer buffer = new StringBuffer();
-
-                String linha;
-                while((linha = reader.readLine()) != null) {
-                    buffer.append(String.format("%s\n", linha));
-                }
-                if(buffer.length() == 0) return null;
-
-                Log.d("Chegou os detalhes.", buffer.toString());
-                return new JSONObject(buffer.toString());
-            } catch (IOException | JSONException e) {
+                String response = HttpRequest.get(uri.toString()).body();
+                return new JSONObject(response.toString());
+            } catch (JSONException e) {
                 Log.e("Pau em alguma coisa.", e.toString());
-            } finally {
-                if(conn != null) conn.disconnect();
-                if(reader != null) {
-                    try { reader.close(); }
-                    catch (IOException e) {
-                        Log.e("Erro na stream.", "Causa: ", e);
-                    }
-                }
             }
             return null;
         }
