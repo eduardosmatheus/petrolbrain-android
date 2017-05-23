@@ -15,7 +15,7 @@
     <application
         android:allowBackup="true"
         android:icon="@mipmap/gas_pump"
-        android:label="@string/app_name"
+        android:label="PetrolBrain"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <meta-data
@@ -24,7 +24,6 @@
 
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
