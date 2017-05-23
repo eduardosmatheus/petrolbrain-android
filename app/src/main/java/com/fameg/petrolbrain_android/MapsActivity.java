@@ -168,18 +168,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final BottomNavigationView.OnNavigationItemSelectedListener navigationListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.nearby : {
-                    SupportMapFragment mapFragment = SupportMapFragment.newInstance();
-                    replaceContent(mapFragment);
-                    mapFragment.getMapAsync(MapsActivity.this);
-                    return true;
-                }
-
-                case R.id.mySettings: {
-                    replaceContent(new SettingsFragment());
-                    return true;
-                }
+            if (item.getItemId() == R.id.nearby) {
+                SupportMapFragment mapFragment = SupportMapFragment.newInstance();
+                replaceContent(mapFragment);
+                mapFragment.getMapAsync(MapsActivity.this);
+                return true;
+            } else if (item.getItemId() == R.id.ajuda) {
+                return true;
+            } else if (item.getItemId() == R.id.mySettings) {
+                replaceContent(new SettingsFragment());
+                return true;
             }
             return false;
         }
