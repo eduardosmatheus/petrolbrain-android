@@ -1,6 +1,7 @@
 package com.fameg.petrolbrain_android;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -9,6 +10,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -26,16 +29,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.net.ssl.HttpsURLConnection;
 
 public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
@@ -91,6 +87,23 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         doPhotoSearch(flipper.getWidth(), flipper.getHeight()).execute(placeId);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.place_options, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.comentarios) {
+            Intent intent = new Intent(this, PlaceCommentsActivity.class);
+            intent.putExtra("PLACE_ID", placeId);
+            startActivity(intent);
+            return true;
+        }
+        return false;
     }
 
     @Override

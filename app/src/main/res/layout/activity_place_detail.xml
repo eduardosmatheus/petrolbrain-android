@@ -39,17 +39,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
-                android:text="Endereço do lugar"
+                android:layout_weight="0.17"
+                android:text="-"
                 android:textAlignment="center"
                 android:textSize="16sp"
-                android:layout_weight="0.17" />
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/placePhone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
-                android:text="Telefone do lugar"
+                android:text="-"
                 android:textAlignment="center"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -71,17 +72,10 @@
                 android:layout_margin="12dp"
                 android:layout_weight="0.48"
                 android:lineSpacingExtra="8sp"
-                android:text="lista dos horários de atendimento"
-                android:textSize="15sp"
+                android:text="- "
+                android:textAlignment="center"
+                android:textSize="16sp"
                 android:typeface="monospace" />
-
-            <Button
-                android:id="@+id/button2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="10dp"
-                android:text="Comentários" />
 
         </LinearLayout>
     </RelativeLayout>
