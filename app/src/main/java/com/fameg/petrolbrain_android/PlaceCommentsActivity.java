@@ -10,13 +10,16 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import com.fameg.petrolbrain_android.adapters.CommentAdapter;
 import com.github.kevinsawicki.http.HttpRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PlaceCommentsActivity extends AppCompatActivity {
@@ -41,7 +44,6 @@ public class PlaceCommentsActivity extends AppCompatActivity {
                 task.execute(placeID, conteudoDoComentario.getText().toString());
             }
         });
-
 
         FetchCommentsTask task = new FetchCommentsTask();
         task.execute(placeID);
@@ -72,11 +74,11 @@ public class PlaceCommentsActivity extends AppCompatActivity {
         protected void onPostExecute(JSONArray results) {
             dialog.dismiss();
 
-            if(results == null) {
+            if(results.length() == 0) {
                 return;
             }
 
-            String[] normalizedResults = new String[]{};
+            String[] normalizedResults = new String[results.length()];
             try {
                 for (int i = 0; i < results.length(); i++) {
                     JSONObject obj = results.getJSONObject(i);
@@ -84,23 +86,22 @@ public class PlaceCommentsActivity extends AppCompatActivity {
                 }
 
                 ListView lista = (ListView) findViewById(R.id.comentarios);
-                if(normalizedResults.length == 0) {
-                    ArrayAdapter<String> comentarios = new ArrayAdapter<String>(getApplicationContext(),
-                            android.R.layout.simple_expandable_list_item_1,
-                            new String[]{"Oi", "tudo Bem?"});
-                    lista.setAdapter(comentarios);
-                } else {
-                    ArrayAdapter<String> comentarios = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_expandable_list_item_1, normalizedResults);
-                    lista.setAdapter(comentarios);
+                if(normalizedResults.length != 0) {
+                    CommentAdapter comments = new CommentAdapter(getApplicationContext(), 0, Arrays.asList(normalizedResults));
+                    lista.setAdapter(comments);
                 }
             } catch (JSONException je) {
                 Log.e("Deu erro.", "Causa: ", je);
             }
-
         }
     }
 
     private class PostCommentsTask extends AsyncTask<String, Void, JSONObject> {
+
+        @Override
+        protected void onPreExecute() {
+            comentar.setEnabled(false);
+        }
 
         @Override
         protected JSONObject doInBackground(String... strings) {
@@ -114,7 +115,9 @@ public class PlaceCommentsActivity extends AppCompatActivity {
                         .post(petrolbrainServerURI)
                         .contentType("application/json")
                         .acceptJson()
-                        .send(payload.toString()).body();
+                        .send(payload.toString())
+                        .body();
+
                 return new JSONObject(response);
             } catch (JSONException e) {
                 Log.e("ERRO. ", "Causa: ", e);
@@ -124,8 +127,15 @@ public class PlaceCommentsActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(JSONObject results) {
-            Log.e("Result: ", results.toString());
-
+            comentar.setEnabled(true);
+            addMsgToListView();
+            Toast.makeText(PlaceCommentsActivity.this, "Comentário efetuado com sucesso.", Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void addMsgToListView() {
+        ListView lista = (ListView) findViewById(R.id.comentarios);
+        ((ArrayAdapter) lista.getAdapter()).notifyDataSetChanged();
+    }
+
 }

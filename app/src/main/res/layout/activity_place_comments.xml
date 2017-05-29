@@ -9,9 +9,11 @@
 
     <ListView
         android:id="@+id/comentarios"
+        style="@style/Base.Theme.AppCompat"
         android:layout_width="match_parent"
         android:layout_height="339dp"
-        android:layout_margin="10dp" />
+        android:layout_margin="10dp"
+        tools:listitem="@layout/comment_item" />
 
     <LinearLayout
         android:layout_width="match_parent"
