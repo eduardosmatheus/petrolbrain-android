@@ -171,6 +171,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mapFragment.getMapAsync(MapsActivity.this);
                 return true;
             } else if (item.getItemId() == R.id.ajuda) {
+                replaceContent(new ChatFragment());
                 return true;
             } else if (item.getItemId() == R.id.mySettings) {
                 replaceContent(new SettingsFragment());

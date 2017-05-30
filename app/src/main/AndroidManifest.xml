@@ -37,6 +37,9 @@
         <activity
             android:name=".PlaceCommentsActivity"
             android:screenOrientation="portrait"/>
+
+        <activity android:name=".ChatFragment"
+            android:screenOrientation="portrait"/>
     </application>
 
 </manifest>
