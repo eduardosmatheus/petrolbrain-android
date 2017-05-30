@@ -73,30 +73,30 @@ public class PlaceCommentsActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(JSONArray results) {
             dialog.dismiss();
-
-            if(results.length() == 0) {
-                return;
-            }
-
-            String[] normalizedResults = new String[results.length()];
-            try {
-                for (int i = 0; i < results.length(); i++) {
-                    JSONObject obj = results.getJSONObject(i);
-                    normalizedResults[i] = obj.getString("content");
-                }
-
-                ListView lista = (ListView) findViewById(R.id.comentarios);
-                if(normalizedResults.length != 0) {
-                    CommentAdapter comments = new CommentAdapter(getApplicationContext(), 0, Arrays.asList(normalizedResults));
-                    lista.setAdapter(comments);
-                }
-            } catch (JSONException je) {
-                Log.e("Deu erro.", "Causa: ", je);
-            }
+            if(results.length() == 0) return;
+            normalizeComments(results);
         }
     }
 
-    private class PostCommentsTask extends AsyncTask<String, Void, JSONObject> {
+    private void normalizeComments(JSONArray results) {
+        String[] normalizedResults = new String[results.length()];
+        try {
+            for (int i = 0; i < results.length(); i++) {
+                JSONObject obj = results.getJSONObject(i);
+                normalizedResults[i] = obj.getString("content");
+            }
+
+            ListView lista = (ListView) findViewById(R.id.comentarios);
+            if(normalizedResults.length != 0) {
+                CommentAdapter comments = new CommentAdapter(getApplicationContext(), 0, Arrays.asList(normalizedResults));
+                lista.setAdapter(comments);
+            }
+        } catch (JSONException je) {
+            Log.e("Deu erro.", "Causa: ", je);
+        }
+    }
+
+    private class PostCommentsTask extends AsyncTask<String, Void, JSONArray> {
 
         @Override
         protected void onPreExecute() {
@@ -104,7 +104,7 @@ public class PlaceCommentsActivity extends AppCompatActivity {
         }
 
         @Override
-        protected JSONObject doInBackground(String... strings) {
+        protected JSONArray doInBackground(String... strings) {
             String petrolbrainServerURI = String.format("https://petrolbrain-server.herokuapp.com/places/%s/comments", strings[0]);
             try {
                 JSONObject payload = new JSONObject("{}");
@@ -117,19 +117,18 @@ public class PlaceCommentsActivity extends AppCompatActivity {
                         .acceptJson()
                         .send(payload.toString())
                         .body();
-
-                return new JSONObject(response);
+                Log.d("Reponse: ", response);
+                return new JSONArray(response);
             } catch (JSONException e) {
                 Log.e("ERRO. ", "Causa: ", e);
+                return null;
             }
-            return null;
         }
 
         @Override
-        protected void onPostExecute(JSONObject results) {
+        protected void onPostExecute(JSONArray results) {
             comentar.setEnabled(true);
-            addMsgToListView();
-            Toast.makeText(PlaceCommentsActivity.this, "Comentário efetuado com sucesso.", Toast.LENGTH_SHORT).show();
+            normalizeComments(results);
         }
     }
 

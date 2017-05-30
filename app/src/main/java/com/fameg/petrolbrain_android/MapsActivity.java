@@ -152,13 +152,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(grantResults[0] == PERMISSION_GRANTED) {
                 loc = LocationServices.FusedLocationApi.getLastLocation(client);
                 LatLng localAtual = new LatLng(loc.getLatitude(), loc.getLongitude());
-                moveMapToSomewhere(localAtual, new MarkerOptions().title("Você está aqui."));
+                moveMapToSomewhere(localAtual);
             } else finish();
         }
     }
 
-    private void moveMapToSomewhere(LatLng somewhere, MarkerOptions options) {
-        meuMapa.addMarker(options.position(somewhere));
+    private void moveMapToSomewhere(LatLng somewhere) {
+        meuMapa.addMarker(new MarkerOptions().position(somewhere));
         meuMapa.moveCamera(CameraUpdateFactory.newLatLngZoom(somewhere, 15));
     }
 
@@ -249,14 +249,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Log.e("ERRO.", "Causa: ",e);
             }
             dialog.dismiss();
-
-            LatLng aqui = new LatLng(loc.getLatitude(), loc.getLongitude());
-
-            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher);
-
-            meuMapa.addMarker(new MarkerOptions().position(aqui).icon(icon).title("Você está aqui."));
-
-            meuMapa.moveCamera(CameraUpdateFactory.newLatLngZoom(aqui, 15));
         }
     }
 

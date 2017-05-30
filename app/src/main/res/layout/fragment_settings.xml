@@ -5,19 +5,6 @@
     android:layout_height="match_parent"
     tools:context="com.fameg.petrolbrain_android.fragments.SettingsFragment">
 
-    <Switch
-        android:id="@+id/switch1"
-        android:layout_width="350dp"
-        android:layout_height="50dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginTop="16dp"
-        android:text="Não sei ainda o que colocar"
-        app:layout_constraintHorizontal_bias="0.9"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <SeekBar
         android:id="@+id/raioDeBusca"
         android:layout_width="350dp"
@@ -32,13 +19,12 @@
         android:id="@+id/textView"
         android:layout_width="346dp"
         android:layout_height="37dp"
-        android:layout_marginTop="8dp"
         android:text="Raio de Busca"
         android:gravity="center_vertical"
         android:textAlignment="center"
         android:textSize="18sp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switch1"
-        tools:layout_editor_absoluteX="-125dp" />
+        tools:layout_editor_absoluteX="-125dp"
+        tools:layout_editor_absoluteY="74dp" />
 </android.support.constraint.ConstraintLayout>
