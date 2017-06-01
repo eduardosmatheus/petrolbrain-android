@@ -223,6 +223,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .appendQueryParameter("location", latitude+","+longitude)
                     .appendQueryParameter("radius", radius)
                     .appendQueryParameter("type", "gas_station")
+                    .appendQueryParameter("keyword", "Posto")
                     .build();
 
                 String response = HttpRequest.get(uri.toString()).body();
