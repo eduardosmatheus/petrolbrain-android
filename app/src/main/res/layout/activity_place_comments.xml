@@ -9,7 +9,6 @@
 
     <ListView
         android:id="@+id/comentarios"
-        style="@style/Base.Theme.AppCompat"
         android:layout_width="match_parent"
         android:layout_height="339dp"
         android:layout_margin="10dp"

@@ -8,15 +8,14 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.HorizontalScrollView;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.fameg.petrolbrain_android.adapters.PlaceImagesAdapter;
 import com.github.kevinsawicki.http.HttpRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -36,7 +35,6 @@ import java.util.List;
 public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
-    private HorizontalScrollView flipper; //TODO Deverá ser mudado.
     private TextView placeAddress;
     private TextView placePhone;
     private TextView placeOpeningHours;
@@ -53,7 +51,6 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
         placeAddress = (TextView) findViewById(R.id.placeAddress);
         placePhone = (TextView) findViewById(R.id.placePhone);
         placeOpeningHours = (TextView) findViewById(R.id.placeOpeningHours);
-        flipper = (HorizontalScrollView) findViewById(R.id.placeImagesFlipper);
 
         client = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -86,10 +83,8 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-
-        LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearImages);
-        if(linearLayout.findViewWithTag("PLACE_IMG") == null)
-            doPhotoSearch(flipper.getWidth(), flipper.getHeight()).execute(placeId);
+        ViewPager pager = (ViewPager) findViewById(R.id.placesViewPager);
+        doPhotoSearch(pager.getWidth(), pager.getHeight()).execute(placeId);
     }
 
     @Override
@@ -142,7 +137,7 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
                 String response = HttpRequest.get(uri.toString()).body();
                 return new JSONObject(response.toString());
             } catch (JSONException e) {
-                Log.e("Pau em alguma coisa.", e.toString());
+                Log.e("Erro em alguma coisa.", e.toString());
             }
             return null;
         }
@@ -205,16 +200,9 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
             @Override
             protected void onPostExecute(List<Bitmap> photos) {
                 if(!photos.isEmpty()) {
-                    LinearLayout layout = (LinearLayout) findViewById(R.id.linearImages);
-                    for (Bitmap bit : photos) {
-                        ImageView imageView = new ImageView(getApplicationContext());
-                        imageView.setId(photos.indexOf(bit));
-                        imageView.setPadding(2, 2, 2, 2);
-                        imageView.setImageBitmap(bit);
-                        imageView.setTag("PLACE_IMG");
-                        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        layout.addView(imageView);
-                    }
+                    ViewPager pager = (ViewPager) findViewById(R.id.placesViewPager);
+                    PlaceImagesAdapter adpt = new PlaceImagesAdapter(getSupportFragmentManager(), getApplicationContext(), photos);
+                    pager.setAdapter(adpt);
                 }
             }
         };
