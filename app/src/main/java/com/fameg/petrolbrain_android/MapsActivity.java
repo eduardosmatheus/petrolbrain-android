@@ -117,7 +117,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         boolean possoVerMeuLocal = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PERMISSION_GRANTED;
 
         meuMapa.setMyLocationEnabled(possoVerMeuLocal);
-        meuMapa.setOnMarkerClickListener(new PlaceDetailListener());
+        meuMapa.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                final String placeId = markerIds.get(marker.getTitle());
+                Intent intent = new Intent(getApplicationContext(), PlaceDetailActivity.class);
+                intent.putExtra("PLACE_ID", placeId);
+                startActivity(intent);
+            }
+        });
+        LatLng aqui = new LatLng(loc.getLatitude(), loc.getLongitude());
+        moveMapToSomewhere(aqui);
 
         PetrolBrainFetchPlacesTask task = new PetrolBrainFetchPlacesTask();
         task.execute(String.valueOf(loc.getLatitude()),String.valueOf(loc.getLongitude()), "2000");
@@ -250,35 +260,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
             dialog.dismiss();
         }
-    }
-
-    private class PlaceDetailListener implements GoogleMap.OnMarkerClickListener {
-
-        @Override
-        public boolean onMarkerClick(Marker marker) {
-            final String placeId = markerIds.get(marker.getTitle());
-
-            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MapsActivity.this);
-            dialogBuilder.setTitle("Ver detalhes");
-            dialogBuilder.setMessage("Deseja ver os detalhes do local?");
-            dialogBuilder.setPositiveButton("Sim", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    Intent intent = new Intent(getApplicationContext(), PlaceDetailActivity.class);
-                    intent.putExtra("PLACE_ID", placeId);
-                    startActivity(intent);
-                }
-            });
-
-            dialogBuilder.setNegativeButton("Não", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    dialogInterface.dismiss();
-                }
-            });
-            dialogBuilder.create().show();
-            return false;
-        }
-
     }
 }

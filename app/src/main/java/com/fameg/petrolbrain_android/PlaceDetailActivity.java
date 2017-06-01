@@ -71,10 +71,10 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
 
     @Override
     protected void onResume() {
+        super.onResume();
         if(client != null && !client.isConnected()) {
             client.connect();
         }
-        super.onResume();
     }
 
     @Override
@@ -86,7 +86,10 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        doPhotoSearch(flipper.getWidth(), flipper.getHeight()).execute(placeId);
+
+        LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearImages);
+        if(linearLayout.findViewWithTag("PLACE_IMG") == null)
+            doPhotoSearch(flipper.getWidth(), flipper.getHeight()).execute(placeId);
     }
 
     @Override
@@ -208,6 +211,7 @@ public class PlaceDetailActivity extends AppCompatActivity implements GoogleApiC
                         imageView.setId(photos.indexOf(bit));
                         imageView.setPadding(2, 2, 2, 2);
                         imageView.setImageBitmap(bit);
+                        imageView.setTag("PLACE_IMG");
                         imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         layout.addView(imageView);
                     }
