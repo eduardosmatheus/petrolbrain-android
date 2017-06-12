@@ -105,7 +105,6 @@ public class ChatFragment extends Fragment {
                     Result result = aiResponse.getResult();
                     String botMsg = result.getFulfillment().getSpeech();
                     addMsgToListView(botMsg);
-                    Actions.chatBotTalking(result.getAction(), botMsg);
 
                     msgToBot.setText("");
                     btnSendMessage.setEnabled(true);
