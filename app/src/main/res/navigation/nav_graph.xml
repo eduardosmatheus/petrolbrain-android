@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/nav_graph">
-
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginActivity">
+    <activity
+        android:id="@+id/loginActivity"
+        android:name="com.eduardosmatheus.smartgas.login.LoginActivity"
+        android:label="activity_login"
+        app:action="@string/action_sign_in"
+        tools:layout="@layout/activity_login">
+    </activity>
+    <activity
+        android:id="@+id/mapsActivity"
+        android:name="com.eduardosmatheus.smartgas.MapsActivity"
+        android:label="MapsActivity" />
 </navigation>
